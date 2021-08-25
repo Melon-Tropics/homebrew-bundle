@@ -4,6 +4,7 @@ require "spec_helper"
 require "tsort"
 require "formula"
 require "tab"
+require "utils/bottles"
 
 describe Bundle::BrewDumper do
   subject(:dumper) { described_class }
@@ -24,7 +25,9 @@ describe Bundle::BrewDumper do
                     keg_only?:              true,
                     pinned?:                false,
                     outdated?:              false,
-                    bottle_defined?:        false)
+                    bottle_defined?:        false,
+                    bottle_disabled?:       false,
+                    tap:                    OpenStruct.new(official?: false))
   end
   let(:foo_hash) do
     {
@@ -32,6 +35,7 @@ describe Bundle::BrewDumper do
       any_version_installed?:   true,
       args:                     [],
       bottle:                   false,
+      bottled_or_disabled:      false,
       build_dependencies:       [],
       conflicts_with:           [],
       dependencies:             [],
@@ -46,6 +50,7 @@ describe Bundle::BrewDumper do
       pinned?:                  false,
       poured_from_bottle?:      false,
       version:                  nil,
+      official_tap:             false,
     }
   end
   let(:bar) do
@@ -66,7 +71,9 @@ describe Bundle::BrewDumper do
                     pinned?:                true,
                     outdated?:              true,
                     bottle_defined?:        true,
+                    bottle_disabled?:       false,
                     linked_keg:             linked_keg,
+                    tap:                    OpenStruct.new(official?: true),
                     bottle_hash:            {
                       cellar: ":any",
                       files:  {
@@ -91,6 +98,7 @@ describe Bundle::BrewDumper do
           },
         },
       },
+      bottled_or_disabled:      true,
       build_dependencies:       [],
       conflicts_with:           [],
       dependencies:             [],
@@ -105,6 +113,7 @@ describe Bundle::BrewDumper do
       pinned?:                  true,
       poured_from_bottle?:      true,
       version:                  "1.0",
+      official_tap:             true,
     }
   end
   let(:baz) do
@@ -123,7 +132,9 @@ describe Bundle::BrewDumper do
                     keg_only?:              false,
                     pinned?:                false,
                     outdated?:              false,
-                    bottle_defined?:        false)
+                    bottle_defined?:        false,
+                    bottle_disabled?:       false,
+                    tap:                    OpenStruct.new(official?: false))
   end
   let(:baz_hash) do
     {
@@ -131,6 +142,7 @@ describe Bundle::BrewDumper do
       any_version_installed?:   true,
       args:                     [],
       bottle:                   false,
+      bottled_or_disabled:      false,
       build_dependencies:       ["bar"],
       conflicts_with:           [],
       dependencies:             ["bar"],
@@ -145,6 +157,7 @@ describe Bundle::BrewDumper do
       pinned?:                  false,
       poured_from_bottle?:      false,
       version:                  nil,
+      official_tap:             false,
     }
   end
 

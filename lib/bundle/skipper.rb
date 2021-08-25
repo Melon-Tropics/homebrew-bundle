@@ -1,9 +1,25 @@
 # frozen_string_literal: true
 
+require "hardware"
+
 module Bundle
   module Skipper
     class << self
       def skip?(entry, silent: false)
+        if Hardware::CPU.arm? && !MacOS.version.prerelease? &&
+           entry.type == :brew && entry.name.exclude?("/") &&
+           (formula = BrewDumper.formulae_by_full_name(entry.name)) &&
+           formula[:official_tap] &&
+           !formula[:bottled_or_disabled]
+          puts Formatter.warning "Skipping #{entry.name} (no bottle for Apple Silicon)" unless silent
+          return true
+        end
+
+        return true if @failed_taps&.any? do |tap|
+          prefix = "#{tap}/"
+          entry.name.start_with?(prefix) || entry.options[:full_name]&.start_with?(prefix)
+        end
+
         entry_type_skips = Array(skipped_entries[entry.type])
         return false if entry_type_skips.empty?
 
@@ -12,12 +28,16 @@ module Bundle
         # occasion).
         entry_ids = [entry.name, entry.options[:id]&.to_s].compact
         return false if (entry_type_skips & entry_ids).empty?
-        return true if silent
 
-        puts Formatter.warning "Skipping #{entry.name}"
+        puts Formatter.warning "Skipping #{entry.name}" unless silent
         true
       end
       alias generic_skip? skip?
+
+      def tap_failed!(tap_name)
+        @failed_taps ||= []
+        @failed_taps << tap_name
+      end
 
       private
 

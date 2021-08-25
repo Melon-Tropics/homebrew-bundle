@@ -17,7 +17,7 @@ jobs:
 
     - name: Cache Homebrew Bundler RubyGems
       id: cache
-      uses: actions/cache@v1
+      uses: actions/cache@v2.1.6
       with:
         path: ${{ steps.set-up-homebrew.outputs.gems-path }}
         key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -43,5 +43,11 @@ jobs:
 
     - name: Run RSpec tests
       run: bundle exec rspec
+
+    - name: Test that installing works
+      run: |
+        echo 'brew "hello"' > ./Brewfile
+        brew bundle
+        hello
       
-    - uses: codecov/codecov-action@967e2b38a85a62bd61be5529ada27ebc109948c2
+    - uses: codecov/codecov-action@5a8bb4701eca7ba3673f21664b887f652c58d0a3

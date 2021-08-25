@@ -44,6 +44,10 @@ class Formula
     new(name)
   end
 
+  def bottle_disabled?
+    false
+  end
+
   def bottle_defined?
     true
   end
@@ -92,5 +96,9 @@ class Formula
 
   def any_installed_prefix
     opt_prefix
+  end
+
+  def tap
+    OpenStruct.new official?: true
   end
 end

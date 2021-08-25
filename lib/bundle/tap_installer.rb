@@ -4,23 +4,32 @@ module Bundle
   module TapInstaller
     module_function
 
-    def install(name, verbose: false, **options)
+    def preinstall(name, verbose: false, **_options)
       if installed_taps.include? name
         puts "Skipping install of #{name} tap. It is already installed." if verbose
-        return :skipped
+        return false
       end
+
+      true
+    end
+
+    def install(name, preinstall: true, verbose: false, **options)
+      return true unless preinstall
 
       puts "Installing #{name} tap. It is not currently installed." if verbose
       success = if options[:clone_target]
-        Bundle.system "brew", "tap", name, options[:clone_target], verbose: verbose
+        Bundle.system HOMEBREW_BREW_FILE, "tap", name, options[:clone_target], verbose: verbose
       else
-        Bundle.system "brew", "tap", name, verbose: verbose
+        Bundle.system HOMEBREW_BREW_FILE, "tap", name, verbose: verbose
       end
 
-      return :failed unless success
+      unless success
+        Bundle::Skipper.tap_failed!(name)
+        return false
+      end
 
       installed_taps << name
-      :success
+      true
     end
 
     def installed_taps
